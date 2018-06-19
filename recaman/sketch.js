@@ -35,8 +35,10 @@ function setup()
   step = PI/32; // step = PI/128;
   sect = 0;
 
-  frameRate(1.5);
+  // frameRate(1.5);
+  frameRate(5);
   // frameRate(10);
+  // frameRate(15);
 
   // colorMode(HSB, 255, 100, 100, 10);
   // C = new constants();
@@ -62,42 +64,31 @@ function initBackground() {
   return bg;
 }
 
-// let u = true;
 function draw()
 {
   image(bg,0,0);  // background / numberline
-  // testingCrap();
-
-  // sect += PI/128;
-  // connectNumbers(3,9, sect,true);
-  // connectNumbers(5,17,sect,false);
-  // sect %= 1;
-
   let u = true;   // if set only globaly, the animation
                   // 'flips' on even length'd arrays
 
   if (index >= r.length) {
     console.log('Done!');
-    noLoop();
-    return;
+    noLoop(); return;
   }
 
-  if (sect > 1) {
-    sect = 0;
-    index++;
-  }
+  // for (let i=1; i<index; i++) {
+  //   u = !(i%2);
+  //   sect = index - i;
+  //   connectNumbers(r[i-1],r[i], sect, u);
+  // }
+  index += step;
 
-  for (let i=1; i<index; i++) {
-    u = !(i%2);
-    connectNumbers(r[i-1],r[i], 1, u);
-  }
+  sect %= 1;
+  // connectNumbers(47,42, sect, true);  // under, RTL
+  // connectNumbers(46,43, sect, false); // over,  RTL
+  // connectNumbers(42,47, sect, true);  // under, LTR
+  // connectNumbers(43,46, sect, false); // over,  LTR
 
-  let i = index;
-  u = !(index%2);
-  connectNumbers(r[i-1],r[i], sect, u);   //u=!u;
-
-  sect += step;
-  // console.log(r[i-1],r[i], sect, u);
+  sect+=0.1;
 
   saneFloater.do();
 }
@@ -109,8 +100,9 @@ function connectNumbers(cur, next, sect, under) {
     stroke(255);
     translate(0, h/2-scl/2);  // mid screen/line
 
-    if (next < cur)
-      [next,cur] = [cur,next]   // swap input's order if wrong
+    let backwd = (next < cur);
+    if (backwd)
+      [next,cur] = [cur,next]   // swap input's order
 
     let d = next - cur;     // delta to deratmin arc's 'size'
     let s = scl * d;        // respective w/h values for arc(...)
@@ -121,14 +113,29 @@ function connectNumbers(cur, next, sect, under) {
     // limitting section to bounds (arcs may not cross the numberline!)
     // using epsillon≈0 due to equal-angle inputs breaking arc(~)
     sect = (sect<=0) ? eps : ((sect>1) ? 1 : sect);
-    sect = 1 - sect;    // invert the part of ANGLE to NOT draw in.
 
-    // begin/end angles (under-or-over the numberline)
-    let [b,e] = [-PI,-PI*sect];  // over ^   //  [-PI,-PI~0]
-    if (under)                   // [or]
-        [b,e] = [-e,-b];         // under    //  [0~PI, PI];
+    if (!backwd)         // invert drawing direction.
+      sect = 1 - sect;   // sect: RTL, 1-sect: LTR    (0~1 vs 1~0)
+
+    // begin/end angles explained: (under-or-over the numberline)
+/** ┌─────────┬──────┬──────────────┬────────────────┬──────┬───────────────┐
+  * │ Ovr/Und │ Dirc │  Range(b,e)  │    Formula     │ Sect │ EXAMPLE Param │
+  * ├─────────┼──────┼──────────────┼────────────────┼──────┼───────────────┤
+  * │ over ^  │ L>>R │ -[PI™ ,0~PI] │ [-PI,-PI*sect] │ 1~>0 │ f:(1,6,s,Fls) │
+  * │ over ^  │ R<<L │ -[0~PI,  0™] │ [-PI*sect  ,0] │ 0~>1 │ f:(7,2,s,Tru) │
+  * │ under _ │ L>>R │ +[PI~0, PI™] │ [+PI,+PI*sect] │ 1~>0 │ f:(3,8,s,Fls) │
+  * │ under _ │ R<<L │ +[0™  ,0~PI] │ [0,  +PI*sect] │ 0~>1 │ f:(9,4,s,Tru) │
+  * └─────────┴──────┴──────────────┴────────────────┴──────┴───────────────┘
+  * */
+    let [b,e] = [-PI,-PI*sect];  // fixed beginAng
+    if (backwd)
+      [b,e] = [-PI*sect,0];      // fixed endAng
+
+    if (under)
+      [b,e] = [-e,-b];     // reverse & negate if under the numberline
 
     arc(x,y, s,s, b, e);   // now DRAW my arc! (finally)
+    console.log('b='+b, 'e='+e, 'sc='+sect);
     // console.log(x,y, s,s, b, e);
   pop();
 }
