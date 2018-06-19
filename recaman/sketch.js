@@ -53,16 +53,11 @@ function initBackground() {
   return bg;
 }
 
-let u = true;
+// let u = true;
 function draw()
 {
-  image(bg,0,0);  // background
+  image(bg,0,0);  // background / numberline
   // testingCrap();
-
-  // let u = true;
-  // connectNumbers(0,1,u);    u=!u;
-  // connectNumbers(3,5,u);    u=!u;
-  // connectNumbers(10,5,u);   u=!u;
 
   // c = numbers[c];
   // n = c-k;    // go back if possible
@@ -71,20 +66,14 @@ function draw()
   //
   // numbers[n] = k;
 
+  let u = true;   // if set only globaly, the animation
+                  // 'flips' on even length'd arrays
+
   for (let i=1; i<r.length; i++) {
     connectNumbers(r[i-1],r[i], u);   u=!u;
   }
-  // console.log(c,n);
-
-  // c = n;
-  // k++;
 
   saneFloater.do();
-
-  // background(57);
-  // rectMode(CENTER);
-  // translate(width/2-totalW/2, height/2);
-  // xm+=1;
 }
 
 function connectNumbers(cur, next, under) {
@@ -97,16 +86,17 @@ function connectNumbers(cur, next, under) {
     if (next < cur)
       [next,cur] = [cur,next]   // swap
 
-    let d = next - cur;
-    let x = cur * scl;
-    let y = -scl*(d-1)/2;
-    let a = scl * d;
+    let d = next - cur;     // delta to deratmin arc's 'size'
+    let s = scl * d;        // respective w/h values for arc(...)
+    let x = cur * scl;      // x offset, assumes fixed layout.
+    let y = -scl*(d-1)/2;   // y offset - how many 'half-steps' to fix
+                            //    upwards, as arc is drawn from CORNER
 
-    // draw arc under-or-over the line
+    // draw arc under-or-over the numberline
     if (under)
-      arc(x,y, a,a, 0, PI);
+      arc(x,y, s,s, 0, PI);
     else
-      arc(x,y, a,a, -PI, 0);
+      arc(x,y, s,s, -PI, 0);
 
   pop();
 }
