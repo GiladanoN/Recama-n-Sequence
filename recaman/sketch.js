@@ -12,9 +12,11 @@ let bg;
 
 // let k = 0;
 // let numbers = [];
-//
 // let c, n;
 let r;
+let index, step;
+let sect = 0;
+let eps;
 
 function setup()
 {
@@ -24,13 +26,17 @@ function setup()
 
   createCanvas(w+1,h+1);
   bg = initBackground();
+  eps = PI/4096;
 
   // numbers[0] = 0;
-  // c = 0;
-  // k = 1;
-  r = Recaman(50);
+  // c = 0; k = 1;
+  r = Recaman(500);
+  index = 1;
+  step = PI/32; // step = PI/128;
+  sect = 0;
 
-  frameRate(2);
+  frameRate(1.5);
+  // frameRate(10);
 
   // colorMode(HSB, 255, 100, 100, 10);
   // C = new constants();
@@ -42,34 +48,56 @@ function setup()
 }
 
 function initBackground() {
+  push();
   bg = createGraphics(w+1,h+1)
-  bg.scale(0.5)
-    .background(0)
-    .stroke(255);
-  bg.line(0,h/2, w,h/2)
+  bg.scale(0.5).background(0);
+  bg.stroke(255).line(0,h/2, w,h/2);
+  bg.stroke(255,255,255,200);
   let y = h/2 - scl/4;
-  for (let x=0; x<=w; x+=scl)
+  for (let x=0; x<=w; x+=scl) {
+    bg.strokeWeight(!(x/scl%5) ? 4 : 1);
     bg.line(x,y, x,y+scl/2);
+  }
+  pop();
   return bg;
 }
 
 // let u = true;
-let sect = 0;
 function draw()
 {
   image(bg,0,0);  // background / numberline
   // testingCrap();
 
-  sect += PI/128;
-  connectNumbers(3,9, sect,true);
-  connectNumbers(5,17,sect,false);
+  // sect += PI/128;
+  // connectNumbers(3,9, sect,true);
+  // connectNumbers(5,17,sect,false);
+  // sect %= 1;
 
   let u = true;   // if set only globaly, the animation
                   // 'flips' on even length'd arrays
 
-  // for (let i=1; i<r.length; i++) {
-  //   connectNumbers(r[i-1],r[i], u);   u=!u;
-  // }
+  if (index >= r.length) {
+    console.log('Done!');
+    noLoop();
+    return;
+  }
+
+  if (sect > 1) {
+    sect = 0;
+    index++;
+  }
+
+  for (let i=1; i<index; i++) {
+    u = !(i%2);
+    connectNumbers(r[i-1],r[i], 1, u);
+  }
+
+  let i = index;
+  u = !(index%2);
+  connectNumbers(r[i-1],r[i], sect, u);   //u=!u;
+
+  sect += step;
+  // console.log(r[i-1],r[i], sect, u);
 
   saneFloater.do();
 }
@@ -90,21 +118,18 @@ function connectNumbers(cur, next, sect, under) {
     let y = -scl*(d-1)/2;   // y offset - how many 'half-steps' to fix
                             //    upwards, as arc is drawn from CORNER
 
-    if (sect<0)  sect = 0;  // limit the section value to bounds
-    if (sect>1)  sect = 1;  // (arcs may not cross the numberline!)
-    sect = 1 - sect;  // invert the part of ANGLE to NOT draw
+    // limitting section to bounds (arcs may not cross the numberline!)
+    // using epsillon≈0 due to equal-angle inputs breaking arc(~)
+    sect = (sect<=0) ? eps : ((sect>1) ? 1 : sect);
+    sect = 1 - sect;    // invert the part of ANGLE to NOT draw in.
 
     // begin/end angles (under-or-over the numberline)
-    let [b,e] = [0,-PI];  // over ^
-    if (under)            // [or]
-        [b,e] = [PI,0];   // under _
-
-    // // begin/end angles (under-or-over the numberline)
-    // let [b,e] = [-PI,-PI*sect];  // over ^
-    // if (under)                   // [or]
-    //     [b,e] = [PI*sect,PI];    // under
+    let [b,e] = [-PI,-PI*sect];  // over ^   //  [-PI,-PI~0]
+    if (under)                   // [or]
+        [b,e] = [-e,-b];         // under    //  [0~PI, PI];
 
     arc(x,y, s,s, b, e);   // now DRAW my arc! (finally)
+    // console.log(x,y, s,s, b, e);
   pop();
 }
 
