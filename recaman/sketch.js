@@ -54,29 +54,27 @@ function initBackground() {
 }
 
 // let u = true;
+let sect = 0;
 function draw()
 {
   image(bg,0,0);  // background / numberline
   // testingCrap();
 
-  // c = numbers[c];
-  // n = c-k;    // go back if possible
-  // if (n < 0 || numbers[n])
-  //   n = c+k;  // go forward otherwise
-  //
-  // numbers[n] = k;
+  sect += PI/128;
+  connectNumbers(3,9, sect,true);
+  connectNumbers(5,17,sect,false);
 
   let u = true;   // if set only globaly, the animation
                   // 'flips' on even length'd arrays
 
-  for (let i=1; i<r.length; i++) {
-    connectNumbers(r[i-1],r[i], u);   u=!u;
-  }
+  // for (let i=1; i<r.length; i++) {
+  //   connectNumbers(r[i-1],r[i], u);   u=!u;
+  // }
 
   saneFloater.do();
 }
 
-function connectNumbers(cur, next, under) {
+function connectNumbers(cur, next, sect, under) {
   push();
     noFill();
     ellipseMode(CORNER);
@@ -84,7 +82,7 @@ function connectNumbers(cur, next, under) {
     translate(0, h/2-scl/2);  // mid screen/line
 
     if (next < cur)
-      [next,cur] = [cur,next]   // swap
+      [next,cur] = [cur,next]   // swap input's order if wrong
 
     let d = next - cur;     // delta to deratmin arc's 'size'
     let s = scl * d;        // respective w/h values for arc(...)
@@ -92,12 +90,21 @@ function connectNumbers(cur, next, under) {
     let y = -scl*(d-1)/2;   // y offset - how many 'half-steps' to fix
                             //    upwards, as arc is drawn from CORNER
 
-    // draw arc under-or-over the numberline
-    if (under)
-      arc(x,y, s,s, 0, PI);
-    else
-      arc(x,y, s,s, -PI, 0);
+    if (sect<0)  sect = 0;  // limit the section value to bounds
+    if (sect>1)  sect = 1;  // (arcs may not cross the numberline!)
+    sect = 1 - sect;  // invert the part of ANGLE to NOT draw
 
+    // begin/end angles (under-or-over the numberline)
+    let [b,e] = [0,-PI];  // over ^
+    if (under)            // [or]
+        [b,e] = [PI,0];   // under _
+
+    // // begin/end angles (under-or-over the numberline)
+    // let [b,e] = [-PI,-PI*sect];  // over ^
+    // if (under)                   // [or]
+    //     [b,e] = [PI*sect,PI];    // under
+
+    arc(x,y, s,s, b, e);   // now DRAW my arc! (finally)
   pop();
 }
 
